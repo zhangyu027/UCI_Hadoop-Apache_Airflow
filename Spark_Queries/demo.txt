@@ -1,0 +1,297 @@
+ ***** ***** ***** ***** ***** ***** ***** *****
+Environment
+***** ***** ***** ***** ***** ***** ***** *****
+export SPARK_MAJOR_VERSION=2
+/home/kunwu/python/LearningSpark
+spark-submit Demo1.py
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 1: Search for Errors in Log Files
+***** ***** ***** ***** ***** ***** ***** *****
+rm -rf ~/tmp/onlyerrorsrdd/
+
+from "file:///var/log/hadoop/hdfs/hadoop-hdfs-*"
+
+ls /var/log/hadoop/hdfs/hadoop-hdfs-*
+du -shc /var/log/hadoop/hdfs/hadoop-hdfs-*
+5.4G    total
+
+time spark-submit Demo1.py
+real    0m29.565s
+user    1m15.200s
+sys     0m8.645s
+
+ls ~/tmp/onlyerrorsrdd/
+du -shc ~/tmp/onlyerrorsrdd/
+888K    total
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 2: Creating RDD from Files
+***** ***** ***** ***** ***** ***** ***** *****
+sc.textFile(name, minPartitions=None, use_unicode=True)
+
+sc.wholeTextFiles(path, minPartitions=None, use_unicode=True)
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 3: Creating RDD from JSON
+***** ***** ***** ***** ***** ***** ***** *****
+1. sample json
+2. zipcodes.json
+3. multiline json (need spark 2.2)
+4. multiple json files
+5. read all json files from a directory
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 4: Creating RDD from CSV
+***** ***** ***** ***** ***** ***** ***** *****
+1. default read
+2. read with header
+3. read with delimiter
+4. read with specified schema
+5. write
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 5: Creating RDD Programmatically
+***** ***** ***** ***** ***** ***** ***** *****
+1. create an RDD by using parallelize()
+2. range()
+3. create empty RDD
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 6: Without persist()
+Demo 7: With persist()
+***** ***** ***** ***** ***** ***** ***** *****
+time spark-submit Demo6.py
+real    0m26.888s
+user    0m22.069s
+sys     0m4.214s
+
+time spark-submit Demo7.py
+real    0m23.928s
+user    0m26.990s
+sys     0m4.919s
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 8: RDD transformations
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.map(<function>, preservesPartitioning=False)
+2. RDD.flatMap(<function>, preservesPartitioning=False)
+3. RDD.filter(<function>)
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 9: RDD transformations 2
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.distinct(numPartitions=None)
+2. RDD.groupBy(<function>, numPartitions=None)
+3. RDD.sortBy(<keyfunc>, ascending=True, numPartitions=None)
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 10: RDD actions
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.count()
+2. RDD.collect()
+3. RDD.take(n)
+4. RDD.top(n, key=None)
+5. RDD.first()
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 11: RDD actions 2
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.reduce(<function>)
+2. RDD.fold(zeroValue, <function>)
+3. RDD.foreach(<function>)
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 12: Transformations on PairRDD
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.keys()
+2. RDD.values()
+3. RDD.keyBy(<function>)
+4. RDD.mapValues(<function>)
+5. RDD.flatMapValues(<function>)
+6. RDD.groupByKey(numPartitions=None, partitionFunc=<hash_fn>)
+7. RDD.reduceByKey(<function>, numPartitions=None, partitionFunc=<hash_fn>)
+8. RDD.foldByKey(zeroValue, <function>, numPartitions=None, partitionFunc=<hash_fn>)
+9. RDD.sortByKey(ascending=True, numPartitions=None, keyfunc=<function>)
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Exercise 1: MapReduce and Word Count
+***** ***** ***** ***** ***** ***** ***** *****
+spark-submit Ex1.py /home/kunwu/python/LearningSpark/shakespeare.txt /home/kunwu/python/LearningSpark/data/wordcounts
+
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 13: Join Transformations 
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.join(<otherRDD>, numPartitions=None)
+2. RDD.leftOuterJoin(<otherRDD>, numPartitions=None)
+3. RDD.rightOuterJoin(<otherRDD>, numPartitions=None)
+4. RDD.fullOuterJoin(<otherRDD>, numPartitions=None)
+5. RDD.cogroup(<otherRDD>, numPartitions=None)
+6. RDD.cartesian(<otherRDD>)
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Exercise 2: Joining Datasets in Spark
+***** ***** ***** ***** ***** ***** ***** *****
+spark-submit Ex2.py /home/kunwu/python/LearningSpark/data/bike-share /home/kunwu/python/LearningSpark/data/bike-share/output
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 14: Transformations on Sets
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.union(<otherRDD>)
+2. RDD.intersection(<otherRDD>)
+3. RDD.subtract(<otherRDD>, numPartitions=None)
+4. RDD.subtractByKey(<otherRDD>, numPartitions=None)
+
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 15: Transformations on Numeric RDD
+***** ***** ***** ***** ***** ***** ***** *****
+1. RDD.min(key=None)
+2. RDD.max(key=None)
+3. RDD.mean()
+4. RDD.sum()
+5. RDD.stdev()
+6. RDD.variance()
+7. RDD.stats()
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 16: Getting Started with DataFrames
+***** ***** ***** ***** ***** ***** ***** *****
+1. Creating DataFrame from an existing RDD
+2. Creating DataFrames from JSON
+3. Creating DataFrams from Flat Files
+4. Converting DataFrames to RDDs
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 17: Schema Revisit
+***** ***** ***** ***** ***** ***** ***** *****
+1. Inferring DataFrame Schemas
+2. Defining DataFrame Schemas
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 18: Using DataFrames
+***** ***** ***** ***** ***** ***** ***** *****
+1. DataFrame.show(n=20, truncate=True)
+2. DataFrame.select(*cols)
+3. DataFrame.drop(col)
+4. DataFrame.filter(condition)
+5. DataFrame.distinct()
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 19: UDF
+***** ***** ***** ***** ***** ***** ***** *****
+1. pyspark.sql.functions.udf(func, returnType=StringType)
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 20: Operations on Multiple DataFrames
+***** ***** ***** ***** ***** ***** ***** *****
+1. DataFrame.join(other, on=None, how=None)
+2. DataFrame.orderBy(cols, ascending)
+3. DataFrame.groupBy(cols)
+
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 21: Spark SQL
+***** ***** ***** ***** ***** ***** ***** *****
+1. find all flights whose distance is greater than 1,000 miles
+2. find all flights between San Francisco (SFO) and Chicago (ORD) with at least a two-hour delay
+3. Label all US flights, regardless of origin and destination,
+   with an indication of the delays they experienced
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 22: SQL Tables and Views
+***** ***** ***** ***** ***** ***** ***** *****
+[kunwu@m1 LearningSpark]$ spark-submit Demo22.py
+SPARK_MAJOR_VERSION is set to 2, using Spark2
+find all flights whose distance is greater than 1,000 miles:
+Traceback (most recent call last):
+  File "/home/kunwu/python/LearningSpark/Demo22.py", line 32, in <module>
+    ORDER BY distance DESC""").show(10)
+  File "/usr/hdp/current/spark2-client/python/lib/pyspark.zip/pyspark/sql/session.py", line 543, in sql
+  File "/usr/hdp/current/spark2-client/python/lib/py4j-0.10.3-src.zip/py4j/java_gateway.py", line 1133, in __call__
+  File "/usr/hdp/current/spark2-client/python/lib/pyspark.zip/pyspark/sql/utils.py", line 69, in deco
+pyspark.sql.utils.AnalysisException: u'\nHive support is required to select over the following tables:\n`learn_spark_db`.`managed_us_delay_flights_tbl`\n               ;'
+
+
+spark-submit --conf spark.sql.catalogImplementation=hive Demo22.py
+
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 23: Creating Views
+***** ***** ***** ***** ***** ***** ***** *****
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 24: Checking Metadata
+***** ***** ***** ***** ***** ***** ***** *****
+
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 25: DStream Sources - socketTextStream
+***** ***** ***** ***** ***** ***** ***** *****
+1. socketTextStream()
+while read line; do echo -e "$line\n"; sleep 1; done < shakespeare.txt | nc -lk 9999
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 26: DStream Sources - textFileStream
+***** ***** ***** ***** ***** ***** ***** *****
+2. textFileStream()
+
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 27: Checkpoint
+***** ***** ***** ***** ***** ***** ***** *****
+
+
+
+***** ***** ***** ***** ***** ***** ***** *****
+Demo 28: State Operations
+***** ***** ***** ***** ***** ***** ***** *****
+DStream.updateStateByKey(updateFunc, numPartitions=None)
+echo 'hello world' | nc -lk 9999
