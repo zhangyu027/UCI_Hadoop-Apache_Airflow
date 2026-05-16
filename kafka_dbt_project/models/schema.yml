@@ -1,0 +1,10 @@
+
+version: 2
+
+models:
+  - name: sales_summary
+
+    columns:
+      - name: event
+        tests:
+          - not_null

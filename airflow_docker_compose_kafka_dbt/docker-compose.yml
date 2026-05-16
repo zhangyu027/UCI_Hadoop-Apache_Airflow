@@ -1,0 +1,84 @@
+version: "3.8"
+
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:2.9.3-python3.10
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__WEBSERVER__SECRET_KEY: airflow_secret_key
+    _PIP_ADDITIONAL_REQUIREMENTS: dbt-postgres kafka-python psycopg2-binary pandas
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ../UCI_Hadoop-Apache_Airflow/kafka_dbt_project:/opt/airflow/kafka_dbt_project
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    airflow-postgres:
+      condition: service_healthy
+
+services:
+
+  airflow-postgres:
+    image: postgres:15
+    container_name: airflow_docker_compose_kafka_dbt-airflow-postgres-1
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - airflow-postgres-db-volume:/var/lib/postgresql/data
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow_docker_compose_kafka_dbt-airflow-init-1
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --firstname Yu \
+          --lastname Zhang \
+          --role Admin \
+          --email admin@example.com \
+          --password admin || true
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow_docker_compose_kafka_dbt-airflow-webserver-1
+    command: webserver
+    ports:
+      - "8081:8080"
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-postgres:
+        condition: service_healthy
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow_docker_compose_kafka_dbt-airflow-scheduler-1
+    command: scheduler
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-postgres:
+        condition: service_healthy
+
+volumes:
+  airflow-postgres-db-volume:
