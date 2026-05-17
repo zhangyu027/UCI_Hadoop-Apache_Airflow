@@ -1,0 +1,58 @@
+[
+  {
+    "order_id": 1001,
+    "customer_id": 1,
+    "event": "purchase",
+    "amount": 120.5,
+    "event_date": "2026-05-01",
+    "product_category": "books"
+  },
+  {
+    "order_id": 1002,
+    "customer_id": 2,
+    "event": "purchase",
+    "amount": 89.99,
+    "event_date": "2026-05-01",
+    "product_category": "electronics"
+  },
+  {
+    "order_id": 1003,
+    "customer_id": 3,
+    "event": "purchase",
+    "amount": 45.0,
+    "event_date": "2026-05-02",
+    "product_category": "home"
+  },
+  {
+    "order_id": 1004,
+    "customer_id": 4,
+    "event": "refund",
+    "amount": -20.0,
+    "event_date": "2026-05-02",
+    "product_category": "books"
+  },
+  {
+    "order_id": null,
+    "customer_id": 5,
+    "event": "purchase",
+    "amount": 60.0,
+    "event_date": "2026-05-03",
+    "product_category": "beauty"
+  },
+  {
+    "order_id": 1006,
+    "customer_id": 6,
+    "event": "purchase",
+    "amount": 300.1,
+    "event_date": "2026-05-03",
+    "product_category": "electronics"
+  },
+  {
+    "order_id": 1007,
+    "customer_id": 7,
+    "event": "purchase",
+    "amount": 15.75,
+    "event_date": "2026-05-03",
+    "product_category": "books"
+  }
+]
