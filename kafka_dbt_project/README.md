@@ -223,3 +223,104 @@ analytics=# SELECT * FROM raw_sales;
        3 | purchase |    300
 (3 rows)
 ```
+Step 1: Start Kafka/Postgres
+Step 2: Run producer.py
+Step 3: Confirm raw_sales table
+Step 4: Trigger Airflow DAG
+Step 5: dbt creates sales_summary
+Step 6: dbt test validates model
+```
+cd ~/projects/UCI_Hadoop-Apache_Airflow
+git status
+git add kafka_dbt_project airflow_docker_compose_kafka_dbt
+git commit -m "Add Kafka dbt Airflow pipeline"
+git push
+```
+Day 8 add the pyspark stream and dashboard
+```
+1. Explain architecture
+2. Show producer.py
+3. Show Airflow DAG
+4. Show dbt transformation
+5. Show debugging issues you solved
+6. Show Streamlit dashboard
+7. Discuss scaling + production improvements
+```
+cd ~/projects/UCI_Hadoop-Apache_Airflow
+```
+nano .gitignore
+```
+logs/
+target/
+__pycache__/
+*.log
+.env
+```
+CTRL + O
+ENTER
+CTRL + X
+```
+git rm -r --cached airflow_docker_compose_kafka_dbt/logs
+git rm -r --cached kafka_dbt_project/target
+```
+git status
+```
+git add .gitignore
+git commit -m "Remove generated logs and dbt target files"
+```
+git push
+```
+git status
+```
+Day5-Day6
+```
+perl -pi -e 's/bitnami\/spark:3\.5/bitnami\/spark:3.5.1/g' docker-compose.yml
+```
+docker compose down -v
+docker compose up --build -d
+```
+docker exec -it day56-warehouse-postgres psql -U postgres -d warehouse
+```
+\dt
+SELECT * FROM cleaned_sales_events;
+SELECT * FROM daily_sales_summary;
+```
+warehouse=# \dt
+                List of relations
+ Schema |         Name         | Type  |  Owner   
+--------+----------------------+-------+----------
+ public | cleaned_sales_events | table | postgres
+ public | daily_sales_summary  | table | postgres
+(2 rows)
+
+```
+echo "logs/" >> .gitignore
+echo "__pycache__/" >> .gitignore
+echo "*.log" >> .gitignore
+```
+git add .gitignore
+git commit -m "Update gitignore for generated files"
+git push
+````
+day2_day3_hadoop_pyspark_lab
+```
+python /home/jovyan/work/sales_summary.py
+```
+pip uninstall -y pyspark py4j
+pip install pyspark==3.5.1
+```
+exit
+docker compose down
+docker compose up -d
+```
++-------+-----------+-----+----------+
+|product|   category|sales|sales_rank|
++-------+-----------+-----+----------+
+| Laptop|Electronics| 1200|         1|
+|  Phone|Electronics|  800|         2|
+|   Desk|  Furniture|  300|         3|
+|  Chair|  Furniture|  150|         4|
+|   Book|      Books|   40|         5|
++-------+-----------+-----+----------+
+
+```

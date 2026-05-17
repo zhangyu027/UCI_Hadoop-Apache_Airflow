@@ -1,0 +1,19 @@
+
+services:
+
+  hadoop:
+    image: apache/hadoop:3
+    container_name: day2-hadoop
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+
+  spark:
+    image: quay.io/jupyter/pyspark-notebook:spark-3.5.0
+    container_name: day3-pyspark
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./data:/home/jovyan/data
+      - ./spark_jobs:/home/jovyan/work
+
