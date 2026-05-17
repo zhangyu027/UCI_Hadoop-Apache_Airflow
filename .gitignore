@@ -1,1 +1,6 @@
+logs/
+target/
+__pycache__/
+*.log
+.env
 *.mp4

@@ -1,1 +1,0 @@
-{"_invocation_id": "9fb16922-85ec-4e19-9afe-d24fd1b18186", "linked": {"0": {"name": "model.analytics_project.sales_summary", "type": "model", "succ": [1]}, "1": {"name": "test.analytics_project.not_null_sales_summary_event.130694fdc3", "type": "test"}}}
