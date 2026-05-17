@@ -4,3 +4,6 @@ data/processed/
 __pycache__/
 *.pyc
 .env
+logs/
+__pycache__/
+*.log
