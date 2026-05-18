@@ -1,0 +1,6 @@
+order_id,customer_id,event,amount,event_date,product_category
+1001,1,purchase,120.50,2026-05-01,books
+1002,2,purchase,89.99,2026-05-01,electronics
+1003,3,purchase,45.00,2026-05-02,home
+1004,4,refund,-20.00,2026-05-02,books
+1005,5,purchase,60.00,2026-05-03,beauty
