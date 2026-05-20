@@ -1,6 +1,6 @@
 # Airflow Docker Compose Package for Kafka + dbt
 
-This package lets your `airflow_etl_weather` folder run with:
+This package lets your `kafka_dbt_project` folder run with:
 
 ```bash
 docker compose up -d
@@ -11,7 +11,7 @@ docker compose up -d
 Copy these into:
 
 ```bash
-~/projects/airflow_etl_weather
+~/projects/kafka_dbt_project
 ```
 
 Files included:
@@ -43,7 +43,7 @@ The volume line is:
 Create this folder:
 
 ```bash
-mkdir -p ~/projects/UCI_Hadoop-Apache_Airflow/kafka_dbt_project/.dbt
+mkdir -p ~/projects/UCI_Hadoop-Apache_Airflow/airflow_docker_compose_kafka_dbt/.dbt
 ```
 
 Put the included `.dbt/profiles.yml` there.
@@ -51,14 +51,14 @@ Put the included `.dbt/profiles.yml` there.
 ## Start Kafka/Postgres first
 
 ```bash
-cd ~/projects/UCI_Hadoop-Apache_Airflow/kafka_dbt_project
+cd ~/projects/UCI_Hadoop-Apache_Airflow/airflow_docker_compose_kafka_dbt
 docker compose up -d
 ```
 
 ## Start Airflow
 
 ```bash
-cd ~/projects/airflow_etl_weather
+cd ~/projects/kafka_dbt_project
 echo "AIRFLOW_UID=$(id -u)" > .env
 docker compose up airflow-init
 docker compose up -d
@@ -68,6 +68,7 @@ docker compose up -d
 
 ```text
 http://localhost:8080
+http://localhost:8081
 ```
 
 Login:
