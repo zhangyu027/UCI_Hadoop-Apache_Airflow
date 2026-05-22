@@ -1,32 +1,62 @@
+from __future__ import annotations
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import sum, avg, rank
+from pyspark.sql.functions import avg, col, desc, rank, sum as spark_sum
 from pyspark.sql.window import Window
-from pyspark.sql.functions import col
-from pyspark.sql.functions import desc
 
-spark = SparkSession.builder.appName("sales_summary").getOrCreate()
 
-df = spark.read.csv("/home/jovyan/data/sales.csv", header=True, inferSchema=True)
+def main() -> None:
+    spark = (
+        SparkSession.builder
+        .appName("day3_sales_summary")
+        .getOrCreate()
+    )
 
-print("Original Data")
-df.show()
+    input_path = "/home/jovyan/data/sales.csv"
 
-summary_df = df.groupBy("category").sum("sales")
+    df = spark.read.csv(input_path, header=True, inferSchema=True)
 
-print("Category Sales Summary")
-summary_df.show()
+    print("Original Data")
+    df.show(truncate=False)
+    df.printSchema()
 
-filtered_df = df.filter(col("sales") > 100)
+    category_summary = (
+        df.groupBy("category")
+        .agg(
+            spark_sum("sales").alias("total_sales"),
+            avg("sales").alias("average_sales"),
+        )
+        .orderBy(desc("total_sales"))
+    )
 
-print("Filtered Sales > 100")
-filtered_df.show()
+    print("Category Sales Summary")
+    category_summary.show(truncate=False)
 
-window_spec = Window.orderBy(desc("sales"))
+    high_sales = df.filter(col("sales") > 100).orderBy(desc("sales"))
 
-ranked_df = df.withColumn("sales_rank", rank().over(window_spec))
+    print("Filtered Sales > 100")
+    high_sales.show(truncate=False)
 
-print("Window Function Ranking")
-ranked_df.show()
+    window_spec = Window.orderBy(desc("sales"))
+    ranked_sales = df.withColumn("sales_rank", rank().over(window_spec))
 
-spark.stop()
+    print("Window Function Ranking")
+    ranked_sales.show(truncate=False)
+
+    output_path = "/home/jovyan/data/output/category_sales_summary"
+    (
+        category_summary
+        .coalesce(1)
+        .write
+        .mode("overwrite")
+        .option("header", True)
+        .csv(output_path)
+    )
+
+    print(f"Wrote category summary to: {output_path}")
+
+    spark.stop()
+
+
+if __name__ == "__main__":
+    main()
