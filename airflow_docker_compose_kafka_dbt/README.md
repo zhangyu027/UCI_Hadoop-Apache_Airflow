@@ -1,119 +1,184 @@
-# Airflow Docker Compose Kafka dbt Project — Fixed Package
+# Airflow Docker Compose Kafka dbt Project
 
-This package fixes the repeated package-install problem by using a custom Airflow Docker image.
+This project runs Apache Airflow with PostgreSQL and includes dbt support.
 
-## What was fixed
+## Important folder clarification
 
-The old `docker-compose.yml` used `_PIP_ADDITIONAL_REQUIREMENTS`, so Airflow installed `dbt-postgres`, `kafka-python`, `psycopg2-binary`, and other packages every time containers started. That created repeated dependency warnings and slow restarts.
+The main project folder is:
 
-This version adds:
+```bash
+airflow_docker_compose_kafka_dbt
+```
 
-- `Dockerfile`
-- `requirements.txt`
-- `custom-airflow-dbt:2.9.3` image
-- permanent port mapping: `localhost:8081`
-- `.dbt/profiles.yml` mount
+Run all Docker commands from this folder.
 
-## Folder structure
+`kafka_dbt_project` is **not** the main Docker folder. It is only the dbt project subfolder that is mounted into the Airflow container.
+
+Airflow reads DAG files from:
 
 ```text
-airflow_docker_compose_kafka_dbt_fixed/
-├── Dockerfile
-├── README.md
+./dags
+```
+
+dbt project files live in:
+
+```text
+./kafka_dbt_project
+```
+
+Inside the Airflow container, that same dbt folder appears at:
+
+```text
+/opt/airflow/kafka_dbt_project
+```
+
+That is why the Docker Compose volume line is still needed:
+
+```yaml
+- ./kafka_dbt_project:/opt/airflow/kafka_dbt_project
+```
+
+Do **not** delete that line if your DAG needs to run `dbt debug`, `dbt run`, or `dbt test`.
+
+---
+
+## Recommended folder structure
+
+```text
+airflow_docker_compose_kafka_dbt/
 ├── docker-compose.yml
+├── Dockerfile
 ├── requirements.txt
-├── .env
-├── .dbt/
-│   └── profiles.yml
+├── README.md
 ├── dags/
 │   └── kafka_dbt_pipeline_dag.py
 ├── logs/
-│   └── .gitkeep
-└── plugins/
-    └── .gitkeep
+├── plugins/
+├── .dbt/
+│   └── profiles.yml
+└── kafka_dbt_project/
+    ├── dbt_project.yml
+    ├── models/
+    └── seeds/
 ```
 
-## 1. Put folder in your projects directory
+---
 
-Recommended location:
+## 1. Start Docker Desktop
 
-```bash
-~/projects/UCI_Hadoop_Apache_Airflow/airflow_docker_compose_kafka_dbt
-```
+Make sure Docker Desktop is running.
 
-If replacing an existing folder, back it up first.
+---
 
-## 2. Make sure your dbt project path is correct
-
-This compose file expects your dbt project here:
-
-```bash
-~/projects/UCI_Hadoop_Apache_Airflow/kafka_dbt_project
-```
-
-The volume line is:
-
-```yaml
-../kafka_dbt_project:/opt/airflow/kafka_dbt_project
-```
-
-If your dbt project is somewhere else, update that line in `docker-compose.yml`.
-
-## 3. Start Docker Desktop
-
-Make sure Docker Desktop is open and running.
-
-## 4. Go to project folder
+## 2. Go to the correct project folder
 
 ```bash
 cd ~/projects/UCI_Hadoop_Apache_Airflow/airflow_docker_compose_kafka_dbt
 ```
 
-## 5. Build the custom Airflow image once
+Check that you are in the right folder:
 
 ```bash
-docker compose down
-AIRFLOW_UID=$(id -u) docker compose build --no-cache
+pwd
+ls -la
 ```
 
-## 6. Start Airflow
+You should see:
+
+```text
+docker-compose.yml
+Dockerfile
+requirements.txt
+dags/
+kafka_dbt_project/
+```
+
+---
+
+## 3. Build the custom Airflow image
+
+Run this after changing `Dockerfile` or `requirements.txt`:
 
 ```bash
-AIRFLOW_UID=$(id -u) docker compose up -d
+docker compose build --no-cache
 ```
 
-## 7. Check containers
+This permanently installs dbt and other Python packages into the Docker image, instead of reinstalling packages every time Airflow starts.
+
+---
+
+## 4. Start Airflow
+
+Run in background:
+
+```bash
+docker compose up -d
+```
+
+Or run in foreground to watch logs:
+
+```bash
+docker compose up
+```
+
+---
+
+## 5. Check containers
 
 ```bash
 docker compose ps
 ```
 
-Expected:
+Expected status:
 
 ```text
 airflow-postgres     Up / healthy
-airflow-webserver    Up / 0.0.0.0:8081->8080
+airflow-webserver    Up
 airflow-scheduler    Up
 ```
 
-## 8. Open Airflow
+The webserver port should show:
 
-Use this URL:
+```text
+0.0.0.0:8081->8080/tcp
+```
+
+---
+
+## 6. Open Airflow
+
+Open this URL in your browser:
 
 ```text
 http://localhost:8081
 ```
 
-Do not use `localhost:8080` unless you change the port mapping.
+Use `8081`, not `8080`, because this project maps your Mac port `8081` to Airflow container port `8080`.
 
-## 9. Login
+---
+
+## 7. Login
 
 ```text
 Username: admin
 Password: admin
 ```
 
-## 10. Check logs
+---
+
+## 8. Run dbt manually inside the Airflow container
+
+```bash
+docker exec -it airflow_docker_compose_kafka_dbt-airflow-webserver-1 bash
+cd /opt/airflow/kafka_dbt_project
+dbt debug
+dbt run
+dbt test
+```
+
+---
+
+## 9. Check logs
 
 ```bash
 docker compose logs airflow-webserver --tail 100
@@ -121,33 +186,63 @@ docker compose logs airflow-scheduler --tail 100
 docker compose logs airflow-init --tail 100
 ```
 
-## 11. Trigger DAG
+---
 
-In Airflow, search for:
-
-```text
-kafka_dbt_pipeline
-```
-
-Turn it on and click **Trigger DAG**.
-
-## 12. Stop Airflow
+## 10. Stop Airflow
 
 ```bash
 docker compose down
 ```
 
-## Daily restart command
-
-After the image is built once, next time just run:
+To remove containers and the PostgreSQL volume completely:
 
 ```bash
-cd ~/projects/UCI_Hadoop_Apache_Airflow/airflow_docker_compose_kafka_dbt
-AIRFLOW_UID=$(id -u) docker compose up -d
+docker compose down -v
 ```
 
-Then open:
+Use `down -v` only when you want to reset the Airflow database.
+
+---
+
+## Common issue: localhost:8080 does not open
+
+This project uses:
+
+```yaml
+ports:
+  - "8081:8080"
+```
+
+So open:
 
 ```text
 http://localhost:8081
+```
+
+not:
+
+```text
+http://localhost:8080
+```
+
+---
+
+## Common issue: packages reinstall every time
+
+Do not use this old setting:
+
+```yaml
+_PIP_ADDITIONAL_REQUIREMENTS: dbt-postgres kafka-python psycopg2-binary pandas
+```
+
+The permanent fix is:
+
+1. Put packages in `requirements.txt`.
+2. Install them in `Dockerfile`.
+3. Use `build: .` in `docker-compose.yml`.
+4. Run:
+
+```bash
+docker compose build --no-cache
+docker compose up -d
 ```
