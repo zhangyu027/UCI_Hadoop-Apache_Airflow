@@ -15,13 +15,11 @@ def main() -> None:
     ]
 
     df = spark.createDataFrame(sentences, ["sentence"])
-
     words = df.select(explode(split(col("sentence"), " ")).alias("word"))
     counts = words.groupBy("word").count().orderBy(col("count").desc(), col("word"))
 
     print("Word Count Results")
     counts.show(truncate=False)
-
     spark.stop()
 
 

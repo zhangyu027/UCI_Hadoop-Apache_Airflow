@@ -6,14 +6,9 @@ from pyspark.sql.window import Window
 
 
 def main() -> None:
-    spark = (
-        SparkSession.builder
-        .appName("day3_sales_summary")
-        .getOrCreate()
-    )
+    spark = SparkSession.builder.appName("day3_sales_summary").getOrCreate()
 
     input_path = "/home/jovyan/data/sales.csv"
-
     df = spark.read.csv(input_path, header=True, inferSchema=True)
 
     print("Original Data")
@@ -33,13 +28,11 @@ def main() -> None:
     category_summary.show(truncate=False)
 
     high_sales = df.filter(col("sales") > 100).orderBy(desc("sales"))
-
     print("Filtered Sales > 100")
     high_sales.show(truncate=False)
 
     window_spec = Window.orderBy(desc("sales"))
     ranked_sales = df.withColumn("sales_rank", rank().over(window_spec))
-
     print("Window Function Ranking")
     ranked_sales.show(truncate=False)
 
@@ -54,7 +47,6 @@ def main() -> None:
     )
 
     print(f"Wrote category summary to: {output_path}")
-
     spark.stop()
 
 

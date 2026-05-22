@@ -12,7 +12,9 @@ services:
       - ./hdfs_examples:/hdfs_examples
 
   pyspark:
-    image: quay.io/jupyter/pyspark-notebook:spark-3.5.0
+    build:
+      context: .
+      dockerfile: Dockerfile.pyspark
     container_name: day3-pyspark
     ports:
       - "8888:8888"
