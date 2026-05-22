@@ -1,10 +1,6 @@
-version: "3.8"
-
-x-airflow-common:
-  &airflow-common
+x-airflow-common: &airflow-common
   image: apache/airflow:2.9.3-python3.10
-  environment:
-    &airflow-common-env
+  environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
     AIRFLOW__CORE__FERNET_KEY: ""
@@ -16,14 +12,14 @@ x-airflow-common:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
-    - ../UCI_Hadoop-Apache_Airflow/kafka_dbt_project:/opt/airflow/kafka_dbt_project
+    - ./kafka_dbt_project:/opt/airflow/kafka_dbt_project
+    - ./.dbt:/home/airflow/.dbt
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     airflow-postgres:
       condition: service_healthy
 
 services:
-
   airflow-postgres:
     image: postgres:15
     container_name: airflow_docker_compose_kafka_dbt-airflow-postgres-1
