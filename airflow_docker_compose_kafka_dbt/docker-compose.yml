@@ -12,7 +12,9 @@ x-airflow-common: &airflow-common
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
-    - ./kafka_dbt_project:/opt/airflow/kafka_dbt_project
+    # dbt project is kept as a sibling folder of airflow_docker_compose_kafka_dbt
+    - ../kafka_dbt_project:/opt/airflow/kafka_dbt_project
+    # dbt profile folder lives inside this Airflow Docker folder
     - ./.dbt:/home/airflow/.dbt
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
