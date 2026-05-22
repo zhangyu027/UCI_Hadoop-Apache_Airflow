@@ -1,5 +1,5 @@
-
-kafka-python
-psycopg2-binary
-dbt-postgres
-pandas
+kafka-python==2.0.2
+psycopg2-binary==2.9.9
+dbt-postgres==1.9.0
+pandas==2.2.2
+streamlit==1.37.1

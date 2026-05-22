@@ -1,25 +1,30 @@
+"""Produce sample sales events to Kafka."""
 
-from kafka import KafkaProducer
 import json
 import time
 
-producer = KafkaProducer(
-    bootstrap_servers='localhost:9092',
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
+from kafka import KafkaProducer
 
-for i in range(10):
 
-    event = {
-        "user_id": i,
-        "event": "purchase",
-        "amount": i * 100
-    }
+def main() -> None:
+    producer = KafkaProducer(
+        bootstrap_servers="localhost:9092",
+        value_serializer=lambda value: json.dumps(value).encode("utf-8"),
+    )
 
-    producer.send('sales_topic', value=event)
+    for i in range(10):
+        event = {
+            "user_id": i + 1,
+            "event": "purchase",
+            "amount": (i + 1) * 100,
+        }
+        producer.send("sales_topic", value=event)
+        print(f"Sent: {event}")
+        time.sleep(1)
 
-    print("Sent:", event)
+    producer.flush()
+    producer.close()
 
-    time.sleep(1)
 
-producer.flush()
+if __name__ == "__main__":
+    main()

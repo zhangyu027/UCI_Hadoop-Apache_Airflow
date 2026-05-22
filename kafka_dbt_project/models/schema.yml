@@ -1,10 +1,16 @@
-
 version: 2
 
 models:
   - name: sales_summary
-
+    description: Aggregated sales events created from the raw_sales table.
     columns:
       - name: event
-        tests:
+        description: Event type from the raw sales stream.
+        data_tests:
           - not_null
+      - name: total_events
+        description: Number of events by event type.
+        data_tests:
+          - not_null
+      - name: total_amount
+        description: Total sales amount by event type.

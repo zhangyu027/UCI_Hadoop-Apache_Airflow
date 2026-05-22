@@ -1,6 +1,6 @@
-
-SELECT
+select
     event,
-    COUNT(*) AS total_events
-FROM raw_sales
-GROUP BY event
+    count(*) as total_events,
+    sum(amount) as total_amount
+from raw_sales
+group by event

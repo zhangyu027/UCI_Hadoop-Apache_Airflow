@@ -3,7 +3,7 @@ default:
   outputs:
     dev:
       type: postgres
-      host: host.docker.internal
+      host: localhost
       user: postgres
       password: postgres
       port: 5432
