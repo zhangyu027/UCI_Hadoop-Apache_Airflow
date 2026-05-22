@@ -1,5 +1,6 @@
 x-airflow-common: &airflow-common
-  image: apache/airflow:2.9.3-python3.10
+  build: .
+  image: custom-airflow-dbt:2.9.3
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
@@ -7,13 +8,13 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__WEBSERVER__SECRET_KEY: airflow_secret_key
-    _PIP_ADDITIONAL_REQUIREMENTS: dbt-postgres kafka-python psycopg2-binary pandas
+    DBT_PROFILES_DIR: /opt/airflow/.dbt
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
-    - ./kafka_dbt_project:/opt/airflow/kafka_dbt_project
-    - ./.dbt:/home/airflow/.dbt
+    - ./.dbt:/opt/airflow/.dbt
+    - ../kafka_dbt_project:/opt/airflow/kafka_dbt_project
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     airflow-postgres:
@@ -22,7 +23,6 @@ x-airflow-common: &airflow-common
 services:
   airflow-postgres:
     image: postgres:15
-    container_name: airflow_docker_compose_kafka_dbt-airflow-postgres-1
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -37,7 +37,6 @@ services:
 
   airflow-init:
     <<: *airflow-common
-    container_name: airflow_docker_compose_kafka_dbt-airflow-init-1
     entrypoint: /bin/bash
     command:
       - -c
@@ -54,7 +53,6 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
-    container_name: airflow_docker_compose_kafka_dbt-airflow-webserver-1
     command: webserver
     ports:
       - "8081:8080"
@@ -67,7 +65,6 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
-    container_name: airflow_docker_compose_kafka_dbt-airflow-scheduler-1
     command: scheduler
     restart: always
     depends_on:
