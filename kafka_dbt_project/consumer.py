@@ -1,13 +1,23 @@
+"""Read sample sales events from Kafka and print them."""
 
-from kafka import KafkaConsumer
 import json
 
-consumer = KafkaConsumer(
-    'sales_topic',
-    bootstrap_servers='localhost:9092',
-    auto_offset_reset='earliest',
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
+from kafka import KafkaConsumer
 
-for message in consumer:
-    print("Received:", message.value)
+
+def main() -> None:
+    consumer = KafkaConsumer(
+        "sales_topic",
+        bootstrap_servers="localhost:9092",
+        auto_offset_reset="earliest",
+        enable_auto_commit=True,
+        group_id="sales-print-consumer",
+        value_deserializer=lambda raw: json.loads(raw.decode("utf-8")),
+    )
+
+    for message in consumer:
+        print(f"Received: {message.value}")
+
+
+if __name__ == "__main__":
+    main()

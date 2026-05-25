@@ -1,7 +1,11 @@
-
-name: 'analytics_project'
-version: '1.0'
-profile: 'default'
+name: analytics_project
+version: "1.0"
+profile: default
 config-version: 2
 
-model-paths: ["models"]
+model-paths:
+  - models
+
+models:
+  analytics_project:
+    +materialized: view

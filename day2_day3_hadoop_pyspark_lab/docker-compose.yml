@@ -1,19 +1,26 @@
-
 services:
-
   hadoop:
     image: apache/hadoop:3
     container_name: day2-hadoop
+    hostname: day2-hadoop
+    command: ["bash", "-c", "tail -f /dev/null"]
     ports:
       - "9870:9870"
       - "9000:9000"
+    volumes:
+      - ./data:/data
+      - ./hdfs_examples:/hdfs_examples
 
-  spark:
-    image: quay.io/jupyter/pyspark-notebook:spark-3.5.0
+  pyspark:
+    build:
+      context: .
+      dockerfile: Dockerfile.pyspark
     container_name: day3-pyspark
     ports:
       - "8888:8888"
+      - "4040:4040"
+    environment:
+      JUPYTER_TOKEN: "admin"
     volumes:
       - ./data:/home/jovyan/data
       - ./spark_jobs:/home/jovyan/work
-

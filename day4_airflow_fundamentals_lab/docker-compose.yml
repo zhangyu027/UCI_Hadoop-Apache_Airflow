@@ -1,6 +1,4 @@
-
 services:
-
   airflow-postgres:
     image: postgres:15
     container_name: day4-airflow-postgres
@@ -12,6 +10,7 @@ services:
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
       retries: 5
+      start_period: 5s
     volumes:
       - airflow-postgres-data:/var/lib/postgresql/data
 
@@ -30,7 +29,13 @@ services:
       - -c
       - |
         airflow db migrate
-        airflow users create           --username admin           --firstname Yu           --lastname Zhang           --role Admin           --email admin@example.com           --password admin || true
+        airflow users create \
+          --username admin \
+          --firstname Yu \
+          --lastname Zhang \
+          --role Admin \
+          --email admin@example.com \
+          --password admin || true
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs

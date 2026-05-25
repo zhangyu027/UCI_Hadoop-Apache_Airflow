@@ -21,6 +21,7 @@ from pathlib import Path
 import subprocess
 import shutil
 import sys
+import os
 
 # ============================================================
 # FINAL ABSOLUTE PATHS
@@ -113,19 +114,43 @@ def find_hadoop_command():
 
 
 def find_streaming_jar():
-    """Try to find the Hadoop Streaming jar."""
+    """
+    Try to find the Hadoop Streaming jar without scanning the entire Mac home folder.
+
+    The previous version used Path.home().rglob(...), which can search thousands of
+    files and make the script appear frozen. This version checks only common Hadoop
+    locations and supports an optional HADOOP_STREAMING_JAR environment variable.
+    """
+    env_jar = os.environ.get("HADOOP_STREAMING_JAR")
+    if env_jar and Path(env_jar).exists():
+        return env_jar
+
+    possible_files = [
+        Path("/opt/homebrew/opt/hadoop/libexec/share/hadoop/tools/lib/hadoop-streaming.jar"),
+        Path("/usr/local/opt/hadoop/libexec/share/hadoop/tools/lib/hadoop-streaming.jar"),
+    ]
+
+    for file_path in possible_files:
+        if file_path.exists():
+            return str(file_path)
+
     possible_dirs = [
-        Path("/opt/homebrew/Cellar/hadoop"),
-        Path("/usr/local/Cellar/hadoop"),
         Path("/opt/homebrew/opt/hadoop/libexec/share/hadoop/tools/lib"),
         Path("/usr/local/opt/hadoop/libexec/share/hadoop/tools/lib"),
-        PROJECT_ROOT,
-        Path.home(),
+        Path("/opt/homebrew/Cellar/hadoop"),
+        Path("/usr/local/Cellar/hadoop"),
+        PROJECT_ROOT / "hadoop-3.4.1/share/hadoop/tools/lib",
+        Path.home() / "hadoop-3.4.1/share/hadoop/tools/lib",
     ]
+
     candidates = []
     for folder in possible_dirs:
         if folder.exists():
-            candidates.extend(folder.rglob("hadoop-streaming*.jar"))
+            # Limit recursive searching to Hadoop installation folders only.
+            candidates.extend(folder.glob("hadoop-streaming*.jar"))
+            candidates.extend(folder.glob("**/hadoop-streaming*.jar"))
+
+    candidates = sorted(set(candidates))
     return str(candidates[0]) if candidates else None
 
 

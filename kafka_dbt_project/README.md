@@ -1,326 +1,231 @@
-
 # Kafka + dbt Modern Data Engineering Project
 
-## Stack
-- Kafka
-- PostgreSQL
-- dbt
-- Docker Compose
-- Python
+This folder contains the dbt project and the Kafka/PostgreSQL demo scripts used by the Airflow pipeline in the sibling folder:
 
-## Run Environment
+```text
+../airflow_docker_compose_kafka_dbt
+```
+
+## Folder structure
+
+```text
+UCI_Hadoop_Apache_Airflow/
+├── airflow_docker_compose_kafka_dbt/
+└── kafka_dbt_project/
+    ├── .dbt/
+    │   └── profiles.yml
+    ├── models/
+    │   ├── sales_summary.sql
+    │   ├── profit_summary.sql
+    │   ├── product_profit_analysis.sql
+    │   ├── yearly_profit_trends.sql
+    │   └── schema.yml
+    ├── producer.py
+    ├── consumer.py
+    ├── consumer2.py
+    ├── dashboard.py
+    ├── dbt_project.yml
+    ├── docker-compose.yml
+    ├── requirements.txt
+    └── README.md
+```
+
+## What this project demonstrates
+
+### Original Flow
+```text
+Kafka Producer (sales_topic)
+    ↓
+Kafka Consumer
+    ↓
+PostgreSQL raw_sales table
+    ↓
+dbt sales_summary model
+```
+
+### Enhanced Flow (with Annual Profit Data)
+```text
+Kafka Producer (dual topics)
+├── sales_topic → raw_sales table
+└── profit_events → raw_profit_events table
+    ↓
+Multiple dbt models:
+├── sales_summary (event aggregation)
+├── profit_summary (annual profit by category & year)
+├── product_profit_analysis (product-level metrics)
+└── yearly_profit_trends (year-over-year comparison)
+    ↓
+Airflow DAG orchestration
+    ↓
+Optional Streamlit dashboard
+```
+
+## Important relationship with Airflow
+
+The Airflow project mounts this folder with:
+
+```yaml
+- ../kafka_dbt_project:/opt/airflow/kafka_dbt_project
+```
+
+Inside the Airflow container, dbt runs from:
 
 ```bash
+cd /opt/airflow/kafka_dbt_project
+dbt debug --profiles-dir .dbt
+dbt run --profiles-dir .dbt
+dbt test --profiles-dir .dbt
+```
+
+## Start standalone Kafka and PostgreSQL
+
+Run this only if you want to test Kafka and PostgreSQL from this folder directly:
+
+```bash
+cd ~/projects/UCI_Hadoop_Apache_Airflow/kafka_dbt_project
 docker compose up -d
+docker compose ps
 ```
-docker compose down
-docker compose up -d
+
+## Install Python dependencies locally
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
-docker ps
+
+## Create sample PostgreSQL table
+
+```bash
+docker exec -it kafka_dbt_project-postgres-1 psql -U postgres -d analytics
 ```
-## Run Producer
+
+Then run:
+
+```sql
+create table if not exists raw_sales (
+    user_id integer,
+    event varchar(50),
+    amount integer
+);
+
+insert into raw_sales (user_id, event, amount)
+values
+    (1, 'purchase', 100),
+    (2, 'purchase', 200),
+    (3, 'purchase', 300);
+
+select * from raw_sales;
+\q
+```
+
+## Run Kafka producer and consumer
+
+Terminal 1:
+
+```bash
+python consumer2.py
+```
+
+Terminal 2:
 
 ```bash
 python producer.py
 ```
-python3.10 consumer.py
-```
-## Run Consumer
+
+The consumer inserts Kafka messages into PostgreSQL.
+
+## Run dbt locally
 
 ```bash
-python3.10 consumer.py
+dbt debug --profiles-dir .dbt
+dbt run --profiles-dir .dbt
+dbt test --profiles-dir .dbt
 ```
 
+Expected output:
+
+```text
+Completed successfully
 ```
-STEP 1 — Create PostgreSQL Table
-```
+
+## Verify dbt output
+
+```bash
 docker exec -it kafka_dbt_project-postgres-1 psql -U postgres -d analytics
 ```
-CREATE TABLE raw_sales (
-    user_id INT,
-    event VARCHAR(50),
-    amount INT
-);
-```
-\d
-```
+
+Then:
+
+```sql
+-- View sales summary
+select * from sales_summary;
+
+-- View profit summary (annual profit by category and year)
+select * from profit_summary;
+
+-- View product-level profit analysis
+select * from product_profit_analysis order by total_profit desc;
+
+-- View year-over-year profit trends
+select * from yearly_profit_trends order by year desc, annual_profit desc;
+
+-- View raw profit events
+select * from raw_profit_events limit 10;
+
 \q
 ```
-STEP 2 — Upgrade Consumer
-```
-STEP 3 — Rerun Consumer
-```
-python3.10 consumer2.py
-```
-STEP 4 - Run producer again 
-```
-python3.10 producer.py
-```
-STEP 5 — Verify Data Exists
-```
-docker exec -it kafka_dbt_project-postgres-1 psql -U postgres -d analytics
-SELECT * FROM raw_sales;
-```
-STEP 6 - RUN dbt
-## Run dbt
+
+## New Data: Annual Profit Analysis
+
+The producer now generates profit data in addition to sales events:
+
+### Profit Event Fields
+- `product_id` - Unique identifier for the product
+- `product_name` - Name of the product
+- `category` - Product category (Electronics, Clothing, Home, Food)
+- `year` - Calendar year (2023, 2024, 2025)
+- `quantity` - Units sold in transaction
+- `revenue` - Total revenue (price × quantity)
+- `cost` - Total cost of goods sold
+- `profit` - Net profit (revenue - cost)
+- `profit_margin` - Profit margin percentage
+
+### New dbt Models
+
+**profit_summary**: Annual aggregates by category and year
+- Total transactions and quantity
+- Revenue, cost, and profit totals
+- Average and overall profit margins
+
+**product_profit_analysis**: Product-level metrics across all time
+- Transaction count and total quantities
+- Revenue and profit by product
+- Min, max, and average profit margins
+
+**yearly_profit_trends**: Year-over-year comparison by category
+- Annual revenue, cost, and profit
+- Profit margin percentage trends
+- Track business growth across years
+
+
+
+## Run dashboard
 
 ```bash
-dbt run
-dbt test
+streamlit run dashboard.py
 ```
-Producer
-   ↓
-Kafka
-   ↓
-Consumer
-   ↓
-PostgreSQL
-   ↓
-dbt Models
-   ↓
-Analytics Tables
-```
-docker exec -it kafka_dbt_project-postgres-1 psql -U postgres -d analytics
-```
-SELECT * FROM sales_summary;
-```
-mkdir -p ~/.dbt
 
-cat > ~/.dbt/profiles.yml <<'EOF'
-default:
-  target: dev
-  outputs:
-    dev:
-      type: postgres
-      host: localhost
-      user: postgres
-      password: postgres
-      port: 5432
-      dbname: analytics
-      schema: public
-      threads: 1
-EOF
-```
-ls -l ~/.dbt
-cat ~/.dbt/profiles.yml
-```
-dbt debug
-```
-Kafka Producer
-      ↓
-Kafka Topic
-      ↓
-Consumer
-      ↓
-PostgreSQL
-      ↓
-dbt
-      ↓
-Analytics Tables
-      ↓
-Airflow DAG
-      ↓
-Dashboard
-```
-mkdir -p dags
-```
-nano dags/kafka_dbt_pipeline_dag.py
-```
-ls dags
-```
-docker ps
-```
-docker inspect airflow_etl_weather_cd08ca-scheduler-1
-```
-http://localhost:8081
-```
-docker ps
-```
-docker compose up -d
-```
-run_dbt_models
-```
-Logs
-```
-Completed successfully
-```check_project_files ✅
-run_dbt_models ✅
-test_dbt_models ⏳
+## Stop standalone services
 
-and the DAG summary already shows:
-
-Total success: 2
-
-That means:
-
-Airflow is working
-Docker containers are working
-dbt is connecting to PostgreSQL
-profiles.yml is fixed
-your dbt model compiled successfully
-sales_summary was created successfully
-
-The only remaining task is test_dbt_models, and it is likely still running or about to finish.
-
-Wait ~5–10 seconds and refresh.
-
-You should soon see:
-
-test_dbt_models ✅
-
-Then your whole pipeline is complete.
-
-You have now successfully integrated:
-
-Airflow
-Kafka
-PostgreSQL
-dbt
-Docker Compose
-
-into one working pipeline.
-
-Future errors can still happen (normal in data engineering), but the major architecture/configuration problems are now solved:
-
-Kafka broker issue ✅
-Airflow DAG issue ✅
-Docker networking issue ✅
-dbt profiles issue ✅
-PostgreSQL connection issue ✅
-Missing table issue ✅
-
-Your system is now in a stable state.
-```
-(base) mac:kafka_dbt_project yuzhang$ docker exec -it kafka_dbt_project-postgres-1 psql -U postgres -d analytics
-psql (15.18 (Debian 15.18-1.pgdg13+1))
-Type "help" for help.
-
-analytics=# CREATE TABLE IF NOT EXISTS raw_sales (
-    user_id INT,
-    event VARCHAR(50),
-    amount INT
-);
-
-INSERT INTO raw_sales (user_id, event, amount)
-VALUES
-(1, 'purchase', 100),
-(2, 'purchase', 200),
-(3, 'purchase', 300);
-CREATE TABLE
-INSERT 0 3
-analytics=# \dt
-           List of relations
- Schema |   Name    | Type  |  Owner   
---------+-----------+-------+----------
- public | raw_sales | table | postgres
-(1 row)
-
-analytics=# SELECT * FROM raw_sales;
- user_id |  event   | amount 
----------+----------+--------
-       1 | purchase |    100
-       2 | purchase |    200
-       3 | purchase |    300
-(3 rows)
-```
-Step 1: Start Kafka/Postgres
-Step 2: Run producer.py
-Step 3: Confirm raw_sales table
-Step 4: Trigger Airflow DAG
-Step 5: dbt creates sales_summary
-Step 6: dbt test validates model
-```
-cd ~/projects/UCI_Hadoop-Apache_Airflow
-git status
-git add kafka_dbt_project airflow_docker_compose_kafka_dbt
-git commit -m "Add Kafka dbt Airflow pipeline"
-git push
-```
-Day 8 add the pyspark stream and dashboard
-```
-1. Explain architecture
-2. Show producer.py
-3. Show Airflow DAG
-4. Show dbt transformation
-5. Show debugging issues you solved
-6. Show Streamlit dashboard
-7. Discuss scaling + production improvements
-```
-cd ~/projects/UCI_Hadoop-Apache_Airflow
-```
-nano .gitignore
-```
-logs/
-target/
-__pycache__/
-*.log
-.env
-```
-CTRL + O
-ENTER
-CTRL + X
-```
-git rm -r --cached airflow_docker_compose_kafka_dbt/logs
-git rm -r --cached kafka_dbt_project/target
-```
-git status
-```
-git add .gitignore
-git commit -m "Remove generated logs and dbt target files"
-```
-git push
-```
-git status
-```
-Day5-Day6
-```
-perl -pi -e 's/bitnami\/spark:3\.5/bitnami\/spark:3.5.1/g' docker-compose.yml
-```
-docker compose down -v
-docker compose up --build -d
-```
-docker exec -it day56-warehouse-postgres psql -U postgres -d warehouse
-```
-\dt
-SELECT * FROM cleaned_sales_events;
-SELECT * FROM daily_sales_summary;
-```
-warehouse=# \dt
-                List of relations
- Schema |         Name         | Type  |  Owner   
---------+----------------------+-------+----------
- public | cleaned_sales_events | table | postgres
- public | daily_sales_summary  | table | postgres
-(2 rows)
-
-```
-echo "logs/" >> .gitignore
-echo "__pycache__/" >> .gitignore
-echo "*.log" >> .gitignore
-```
-git add .gitignore
-git commit -m "Update gitignore for generated files"
-git push
-````
-day2_day3_hadoop_pyspark_lab
-```
-python /home/jovyan/work/sales_summary.py
-```
-pip uninstall -y pyspark py4j
-pip install pyspark==3.5.1
-```
-exit
+```bash
 docker compose down
-docker compose up -d
 ```
-+-------+-----------+-----+----------+
-|product|   category|sales|sales_rank|
-+-------+-----------+-----+----------+
-| Laptop|Electronics| 1200|         1|
-|  Phone|Electronics|  800|         2|
-|   Desk|  Furniture|  300|         3|
-|  Chair|  Furniture|  150|         4|
-|   Book|      Books|   40|         5|
-+-------+-----------+-----+----------+
 
+Use the Airflow folder if you want to run the orchestrated DAG:
+
+```bash
+cd ../airflow_docker_compose_kafka_dbt
+docker compose up -d
 ```

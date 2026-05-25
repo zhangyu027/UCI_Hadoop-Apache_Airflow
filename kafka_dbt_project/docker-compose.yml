@@ -1,5 +1,4 @@
 services:
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: kafka_dbt_project-zookeeper-1
@@ -35,3 +34,8 @@ services:
       POSTGRES_DB: analytics
     ports:
       - "5432:5432"
+    volumes:
+      - kafka_dbt_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  kafka_dbt_postgres_data:

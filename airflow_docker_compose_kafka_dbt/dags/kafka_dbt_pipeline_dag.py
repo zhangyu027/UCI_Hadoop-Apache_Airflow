@@ -1,33 +1,54 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 
-PROJECT_DIR = "/opt/airflow/kafka_dbt_project"
+DBT_PROJECT_DIR = "/opt/airflow/kafka_dbt_project"
+DBT_PROFILES_DIR = ".dbt"
+
+default_args = {
+    "retries": 2,
+    "retry_delay": timedelta(minutes=1),
+}
 
 with DAG(
     dag_id="kafka_dbt_pipeline",
-    description="Run dbt models and tests after Kafka demo data is loaded",
-    start_date=datetime(2026, 1, 1),
-    schedule_interval=None,
+    description="Run the Kafka dbt project from Airflow.",
+    start_date=datetime(2025, 1, 1),
+    schedule=None,
     catchup=False,
-    tags=["kafka", "dbt", "modern-data-engineering"],
+    default_args=default_args,
+    tags=["kafka", "dbt"],
 ) as dag:
-
-    check_project_files = BashOperator(
-        task_id="check_project_files",
-        bash_command=f"ls -la {PROJECT_DIR} && ls -la {PROJECT_DIR}/models",
+    check_dbt_version = BashOperator(
+        task_id="check_dbt_version",
+        bash_command="dbt --version",
     )
 
-    run_dbt_models = BashOperator(
-        task_id="run_dbt_models",
-        bash_command=f"cd {PROJECT_DIR} && dbt run --profiles-dir {PROJECT_DIR}/.dbt",
+    dbt_debug = BashOperator(
+        task_id="dbt_debug",
+        bash_command=(
+            f"cd {DBT_PROJECT_DIR} && "
+            f"dbt debug --profiles-dir {DBT_PROFILES_DIR}"
+        ),
     )
 
-    test_dbt_models = BashOperator(
-        task_id="test_dbt_models",
-        bash_command=f"cd {PROJECT_DIR} && dbt test --profiles-dir {PROJECT_DIR}/.dbt",
+    dbt_run = BashOperator(
+        task_id="dbt_run",
+        bash_command=(
+            f"cd {DBT_PROJECT_DIR} && "
+            f"dbt run --profiles-dir {DBT_PROFILES_DIR}"
+        ),
     )
 
-    check_project_files >> run_dbt_models >> test_dbt_models
+    dbt_test = BashOperator(
+        task_id="dbt_test",
+        bash_command=(
+            f"cd {DBT_PROJECT_DIR} && "
+            f"dbt test --profiles-dir {DBT_PROFILES_DIR}"
+        ),
+    )
+
+    check_dbt_version >> dbt_debug >> dbt_run >> dbt_test

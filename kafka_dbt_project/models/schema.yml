@@ -1,10 +1,89 @@
-
 version: 2
 
 models:
   - name: sales_summary
-
+    description: Aggregated sales events created from the raw_sales table.
     columns:
       - name: event
-        tests:
+        description: Event type from the raw sales stream.
+        data_tests:
           - not_null
+      - name: total_events
+        description: Number of events by event type.
+        data_tests:
+          - not_null
+      - name: total_amount
+        description: Total sales amount by event type.
+
+  - name: profit_summary
+    description: Annual profit aggregated by product category and year with profitability metrics.
+    columns:
+      - name: category
+        description: Product category.
+        data_tests:
+          - not_null
+      - name: year
+        description: Calendar year for profit data.
+        data_tests:
+          - not_null
+      - name: total_transactions
+        description: Number of transactions in this category/year.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('profit_summary')
+              field: total_transactions
+      - name: total_quantity
+        description: Total units sold in this category/year.
+      - name: total_revenue
+        description: Total revenue generated in this category/year.
+      - name: total_cost
+        description: Total cost of goods sold in this category/year.
+      - name: total_profit
+        description: Net profit (revenue - cost) in this category/year.
+      - name: avg_profit_margin
+        description: Average profit margin percentage.
+      - name: overall_profit_margin_pct
+        description: Overall profit margin percentage for category/year.
+
+  - name: product_profit_analysis
+    description: Product-level profitability analysis across all transactions.
+    columns:
+      - name: product_id
+        description: Unique product identifier.
+        data_tests:
+          - not_null
+      - name: product_name
+        description: Name of the product.
+        data_tests:
+          - not_null
+      - name: category
+        description: Product category.
+      - name: num_transactions
+        description: Number of sales transactions for this product.
+      - name: total_quantity_sold
+        description: Total units sold for this product.
+      - name: total_revenue
+        description: Total revenue from this product.
+      - name: total_profit
+        description: Total profit from this product.
+      - name: avg_profit_margin
+        description: Average profit margin for this product.
+
+  - name: yearly_profit_trends
+    description: Year-over-year profit trends by category for tracking business growth.
+    columns:
+      - name: category
+        description: Product category.
+        data_tests:
+          - not_null
+      - name: year
+        description: Calendar year.
+        data_tests:
+          - not_null
+      - name: annual_profit
+        description: Total profit for the year and category.
+      - name: annual_revenue
+        description: Total revenue for the year and category.
+      - name: profit_margin_pct
+        description: Profit margin percentage for the year and category.
