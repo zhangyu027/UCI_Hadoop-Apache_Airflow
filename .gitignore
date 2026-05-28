@@ -8,3 +8,5 @@ __pycache__/
 *.csv
 *.parquet
 *.tar.gz
+Assignments/Dataset/cite75_99.txt
+Assignments/Dataset/
