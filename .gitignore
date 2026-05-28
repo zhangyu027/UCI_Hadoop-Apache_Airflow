@@ -4,3 +4,7 @@ __pycache__/
 *.log
 .env
 *.mp4
+*.zip
+*.csv
+*.parquet
+*.tar.gz
